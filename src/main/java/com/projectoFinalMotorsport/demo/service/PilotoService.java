@@ -147,7 +147,7 @@ public class PilotoService {
 
         //ELIMINO TODAS LAS REFERENCIAS
         
-        pilotoRepository.delete(piloto);
+        pilotoRepository.deleteById(id);
         System.out.println("Piloto eliminado con exito");
     }
             

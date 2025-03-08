@@ -22,8 +22,14 @@ import com.projectoFinalMotorsport.demo.repository.EquipoRepository;
 import com.projectoFinalMotorsport.demo.service.PilotoService;
 import com.projectoFinalMotorsport.demo.utils.ApiResponse;
 
+import io.swagger.v3.oas.annotations.*;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.*;
+
+
 @RestController
-@RequestMapping("/pilotos")
+@RequestMapping("/motorSpring")
 public class PilotoController {
 
     @Autowired
@@ -44,9 +50,23 @@ public class PilotoController {
     //GET TODOS LOS PILOTOS
     //localhost:8080/pilotos/
     
-    @GetMapping
-    public ResponseEntity<List<PilotoDTO>> listar() {
-        return ResponseEntity.ok().body(pilotoService.listarPilotos());
+    @GetMapping("/pilotos")
+    @Operation(summary = "Obtenemos todos los registros de los pilotos iniciales desde la base h2", description = "Obtenemos registros almacenados manualmente en la aplicacion")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200", 
+            description = "Successful Operation", 
+            content = @Content(schema = @Schema(
+                implementation = PilotoDTO.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "404",
+            description = "Registers not found",
+            content = @Content(schema = @Schema(
+                implementation = ApiResponse.class
+        )))
+    })
+    public ResponseEntity<?> listar() {
+        return ResponseEntity.ok().body(new ApiResponse("Piloto obtenido con exito", pilotoService.listarPilotos(),"N/A"));
     }
 
     
@@ -54,10 +74,10 @@ public class PilotoController {
     // localhost:8080/pilotos/piloto/2 para obtener el de id 2, hamilton
     
     @GetMapping("/piloto/{id}")
-    public ResponseEntity<PilotoDTO> listar(@PathVariable Long id) {
-        return ResponseEntity.ok().body(pilotoService.obtenerPorId(id));
+    public ResponseEntity<?> listar(@PathVariable Long id) {
+        return ResponseEntity.ok().body(new ApiResponse("Pilotos listados con exito", pilotoService.obtenerPorId(id),"N/A"));
     }
-
+   
     //POST PILOTO
     // localhost:8080/pilotos/crearPiloto  para crear un nuevo piloto en el body (piloto 3 en DemoApp)
 
@@ -65,7 +85,7 @@ public class PilotoController {
     public ResponseEntity<?> agregar(@RequestBody PilotoDTO pilotoDTO) {
         try {
             PilotoDTO pilotoCreado = pilotoService.agregarPiloto(pilotoDTO);
-            return ResponseEntity.ok().body(new ApiResponse("Piloto agregado con exito", pilotoCreado, "Sin errores"));
+            return ResponseEntity.ok().body(new ApiResponse("Piloto agregado con exito", pilotoCreado, "N/A"));
             
         }
         catch(Exception e) {
@@ -81,7 +101,7 @@ public class PilotoController {
     public ResponseEntity<?> modificar(@PathVariable Long id, @RequestBody PilotoDTO pilotoDTO) {
         try {
             PilotoDTO pilotoModificado = pilotoService.actualizarPiloto(id, pilotoDTO);
-            return ResponseEntity.ok().body(new ApiResponse("Actualizacion exitosa del piloto", pilotoModificado, "Sin errores"));
+            return ResponseEntity.ok().body(new ApiResponse("Actualizacion exitosa del piloto", pilotoModificado, "N/A"));
 
         }
         catch(Exception e) {
@@ -92,10 +112,25 @@ public class PilotoController {
     //localhost:8080/pilotos/eliminarPiloto/3 para eliminar a kobayashi luego de agreggarlo
 
      @DeleteMapping("/eliminarPiloto/{id}")
+     @Operation(summary = "Borrar un piloto de la DB", description = "Borra un piloto segun el ID ingresado")
+     @ApiResponses(value = {
+         @io.swagger.v3.oas.annotations.responses.ApiResponse(
+         responseCode = "204", 
+         description = "Driver deleted",
+         content = @Content(schema = @Schema(
+                 implementation = ApiResponse.class))),
+     @io.swagger.v3.oas.annotations.responses.ApiResponse(
+         responseCode = "404", 
+         description = "User not found",
+         content = @Content(schema = @Schema(
+             implementation = ApiResponse.class 
+             )))
+         })
     public ResponseEntity<?> eliminar(@PathVariable Long id) {
         try {
+            PilotoDTO pilotoABorrar = pilotoService.obtenerPorId(id);
             pilotoService.eliminarPiloto(id);
-            return ResponseEntity.ok().body(new ApiResponse("Se elimino el piloto con exito", null, "Sin errores"));
+            return ResponseEntity.ok().body(new ApiResponse("Se elimino el piloto con exito", pilotoABorrar, "N/A"));
         }
         catch(Exception e) {
             return ResponseEntity.badRequest().body(new ApiResponse("Datos invalidos para eliminar", null, e.getMessage()));
