@@ -89,7 +89,7 @@ public class PilotoController {
         )))
     })
     public ResponseEntity<?> listar(@PathVariable Long id) {
-        return ResponseEntity.ok().body(new ApiResponse("Pilotos listados con exito", pilotoService.obtenerPorId(id),"N/A"));
+        return ResponseEntity.ok().body(new ApiResponse("Piloto obtenido con exito", pilotoService.obtenerPilotoDTOPorId(id),"N/A"));
     }
    
     //POST PILOTO
@@ -180,7 +180,7 @@ public class PilotoController {
          })
     public ResponseEntity<?> eliminar(@PathVariable Long id) {
         try {
-            PilotoDTO pilotoABorrar = this.pilotoService.obtenerPorId(id);
+            PilotoDTO pilotoABorrar = this.pilotoService.obtenerPilotoDTOPorId(id);
             pilotoService.eliminarPiloto(id);
             return ResponseEntity.ok().body(new ApiResponse("Se elimino el piloto con exito", pilotoABorrar, "N/A"));
         }

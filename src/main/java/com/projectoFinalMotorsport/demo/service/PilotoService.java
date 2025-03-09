@@ -47,7 +47,7 @@ public class PilotoService {
     }
 
     @Transactional
-    public PilotoDTO obtenerPorId(Long id) {
+    public PilotoDTO obtenerPilotoDTOPorId(Long id) {
         Piloto piloto = pilotoRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Piloto no encontrado"));
 
@@ -147,7 +147,7 @@ public class PilotoService {
 
         //ELIMINO TODAS LAS REFERENCIAS
         
-        this.pilotoRepository.delete(this.pilotoRepository.findById(id).get());
+        this.pilotoRepository.delete(pilotoRepository.findById(id).get());
         System.out.println("Piloto eliminado con exito");
     }
             
