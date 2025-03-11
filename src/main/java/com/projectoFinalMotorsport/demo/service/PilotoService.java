@@ -129,8 +129,7 @@ public class PilotoService {
     @Transactional
     public void eliminarPiloto(Long id) {
         
-        Piloto piloto = pilotoRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Piloto no encontrado"));
+        Piloto piloto = pilotoRepository.findById(id).orElseThrow(() -> new RuntimeException("Piloto no encontrado"));
         
         
         for(Carrera carrera : piloto.getCarreras()) {
@@ -147,7 +146,7 @@ public class PilotoService {
 
         //ELIMINO TODAS LAS REFERENCIAS
         
-        this.pilotoRepository.delete(pilotoRepository.findById(id).get());
+        pilotoRepository.delete(pilotoRepository.findById(id).get());
         System.out.println("Piloto eliminado con exito");
     }
             

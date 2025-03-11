@@ -66,7 +66,7 @@ public class PilotoController {
         )))
     })
     public ResponseEntity<?> listar() {
-        return ResponseEntity.ok().body(new ApiResponse("Piloto obtenido con exito", pilotoService.listarPilotos(),"N/A"));
+        return ResponseEntity.ok().body(new ApiResponse("Pilotos obtenidos con exito", pilotoService.listarPilotos(),"N/A"));
     }
 
     
