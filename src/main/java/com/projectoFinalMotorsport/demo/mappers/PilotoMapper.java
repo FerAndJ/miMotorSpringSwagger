@@ -3,6 +3,7 @@ package com.projectoFinalMotorsport.demo.mappers;
 import java.util.List;
 import java.util.Locale.Category;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.projectoFinalMotorsport.demo.dto.PilotoDTO;
@@ -14,12 +15,22 @@ import com.projectoFinalMotorsport.demo.model.Piloto;
 import com.projectoFinalMotorsport.demo.repository.AutoRepository;
 import com.projectoFinalMotorsport.demo.repository.CarreraRepository;
 import com.projectoFinalMotorsport.demo.repository.EquipoRepository;
+import com.projectoFinalMotorsport.demo.service.AutoService;
 
 
 @Component
 public class PilotoMapper {
 
-    public static PilotoDTO toDto(Piloto piloto) {
+    @Autowired
+    private AutoRepository autoRepository;
+
+    @Autowired
+    private EquipoRepository equipoRepository;
+
+    @Autowired
+    private CarreraRepository carreraRepository;
+    
+    public  PilotoDTO toDto(Piloto piloto) {
         if (piloto == null) {
             return null;
         }
@@ -31,7 +42,7 @@ public class PilotoMapper {
                 .numero(piloto.getNumero())
                 .nacionalidad(piloto.getNacionalidad())
                 .categoria(piloto.getCategoria().name())
-                .equipo(piloto.getEquipo().getNombre())
+                .equipo(piloto.getEquipo() != null ? piloto.getEquipo().getNombre() : null) 
                 .carreras(piloto.getCarreras() != null
                         ? piloto.getCarreras().stream().map(Carrera::getNombre).toList()
                         : List.of())
@@ -39,7 +50,7 @@ public class PilotoMapper {
                 .build();
     }
 
-    public static Piloto toEntity(PilotoDTO pilotoDTO, EquipoRepository equipoRepository, CarreraRepository carreraRepository, AutoRepository autoRepository) {
+    public  Piloto toEntity(PilotoDTO pilotoDTO) {
         if (pilotoDTO == null) {
             return null;
         }

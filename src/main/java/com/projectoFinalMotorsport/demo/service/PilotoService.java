@@ -17,7 +17,9 @@ import com.projectoFinalMotorsport.demo.repository.CarreraRepository;
 import com.projectoFinalMotorsport.demo.repository.EquipoRepository;
 import com.projectoFinalMotorsport.demo.repository.PilotoRepository;
 
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 
 import com.projectoFinalMotorsport.demo.dto.PilotoDTO;;
@@ -37,13 +39,19 @@ public class PilotoService {
     @Autowired
     private EquipoRepository equipoRepository;
 
+    @Autowired
+    private PilotoMapper pilotoMapper;
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
      public Piloto save(Piloto piloto) {
         return pilotoRepository.save(piloto);
     }
 
     @Transactional
     public List<PilotoDTO> listarPilotos() {
-        return pilotoRepository.findAll().stream().map(PilotoMapper::toDto).toList();
+        return pilotoRepository.findAll().stream().map(pilotoMapper::toDto).toList();
     }
 
     @Transactional
@@ -51,7 +59,7 @@ public class PilotoService {
         Piloto piloto = pilotoRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Piloto no encontrado"));
 
-        return PilotoMapper.toDto(piloto);
+        return pilotoMapper.toDto(piloto);
     }
 
     @Transactional
@@ -83,7 +91,7 @@ public class PilotoService {
 
         
         Piloto pilotoCreado = this.save(piloto);
-        return  PilotoMapper.toDto(pilotoCreado);
+        return  pilotoMapper.toDto(pilotoCreado);
         
         /* 
         Piloto piloto = this.save(PilotoMapper.toEntity(pilotoDTO, equipoRepository, carreraRepository, autoRepository));
@@ -122,32 +130,47 @@ public class PilotoService {
     piloto.setCarreras(carrerasPiloto);
     piloto.setAuto(autoPiloto);
 
-    return PilotoMapper.toDto(pilotoRepository.save(piloto));
+    return pilotoMapper.toDto(pilotoRepository.save(piloto));
     
     }
 
     @Transactional
     public void eliminarPiloto(Long id) {
         
+        
+        
         Piloto piloto = pilotoRepository.findById(id).orElseThrow(() -> new RuntimeException("Piloto no encontrado"));
         
         
-        for(Carrera carrera : piloto.getCarreras()) {
-            carrera.getPilotos().remove(piloto);
+        if(piloto.getCarreras() != null && !piloto.getCarreras().isEmpty()) {
+            
+            for(Carrera carrera : piloto.getCarreras()) {
+                carrera.getPilotos().remove(piloto);
+                carreraRepository.save(carrera);
+            }
+     
+            piloto.getCarreras().clear();
         }
-
-        piloto.getCarreras().clear();
-
         
         if(piloto.getAuto() != null) {
-            piloto.getAuto().setPiloto(null);
+            Auto auto = piloto.getAuto();
+            auto.setPiloto(null);
+            autoRepository.save(auto);
             piloto.setAuto(null);
         }
-
-        //ELIMINO TODAS LAS REFERENCIAS
         
-        pilotoRepository.delete(pilotoRepository.findById(id).get());
-        System.out.println("Piloto eliminado con exito");
+        
+        if(piloto.getEquipo() != null) {
+            piloto.setEquipo(null);
+        }
+        //ELIMINO TODAS LAS REFERENCIAS
+        entityManager.flush();
+        
+        pilotoRepository.delete(piloto);
+
+        
+        System.out.println("Piloto eliminado: " + piloto.getNombre()); // Log para confirmar
+        
     }
             
 }

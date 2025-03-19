@@ -16,4 +16,8 @@ public class AutoService {
      public Auto save(Auto auto) {
         return autoRepository.save(auto);
     }
+
+    public Auto findByModelo(String modelo) {
+        return autoRepository.findByModelo(modelo);
+    }
 }
