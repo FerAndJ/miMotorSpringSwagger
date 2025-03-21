@@ -1,6 +1,8 @@
 package com.projectoFinalMotorsport.demo.controllers;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.projectoFinalMotorsport.demo.dto.PilotoDTO;
@@ -69,6 +72,60 @@ public class PilotoController {
         return ResponseEntity.ok().body(new ApiResponse("Pilotos obtenidos con exito", pilotoService.listarPilotos(),"N/A"));
     }
 
+    @GetMapping("/pilotosSort")
+    @Operation(summary = "Obtenemos todos los registros de los pilotos iniciales desde la base h2, ordenados por peso", description = "Obtenemos registros almacenados manualmente en la aplicacion")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200", 
+            description = "Successful Operation", 
+            content = @Content(schema = @Schema(
+                implementation = PilotoDTO.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "404",
+            description = "Registers not found",
+            content = @Content(schema = @Schema(
+                implementation = ApiResponse.class
+        )))
+    })
+   
+    public ResponseEntity<?> listarPorPeso(@RequestParam(defaultValue = "desc") String order) {
+    return ResponseEntity.ok().body(new ApiResponse("Pilotos obtenidos con éxito", 
+        pilotoService.listarPilotos().stream()
+            .sorted((p1, p2) -> order.equals("asc")
+                ? p1.getPeso().compareTo(p2.getPeso())  
+                : p2.getPeso().compareTo(p1.getPeso())) 
+            
+        ,"N/A"));
+    }
+
+    @GetMapping("/filterCategoria")
+    @Operation(summary = "Filtramos a los pilotos por categoria", description = "Filtramos a los pilotos por categoria a la que pertenezcan, por ejemplo IMSA")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200", 
+            description = "Successful Operation", 
+            content = @Content(schema = @Schema(
+                implementation = PilotoDTO.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "404",
+            description = "Registers not found",
+            content = @Content(schema = @Schema(
+                implementation = ApiResponse.class
+        )))
+    })
+   
+    public ResponseEntity<?> filterByCategoria(@RequestParam String category) {
+    return ResponseEntity.ok().body(new ApiResponse("Pilotos obtenidos con éxito", 
+        pilotoService.listarPilotos().stream()
+        .filter(piloto -> piloto.getCategoria().equalsIgnoreCase(category))
+        .collect(Collectors.toList())
+            
+            
+        ,"N/A")); 
+
+        //Collector es para transformar el string en una lista, sin eso toList() hace que sea inmutable
+    }
+
     
     //GET PILOTO POR ID (sobre carga del metodo)
     // localhost:8080/motorSpring/piloto/2 para obtener el de id 2, hamilton
@@ -96,7 +153,7 @@ public class PilotoController {
     // localhost:8080/motorSpring/crearPiloto  para crear un nuevo piloto en el body (piloto 3 en DemoApp)
 
     @PostMapping("/crearPiloto")
-    @Operation(summary = "Creamos un nuevo registro en la base h2", description = "Creamos el registro del piloto ingresado mediante un json")
+    @Operation(summary = "Creamos un nuevo registro en la base h2", description = "Creamos el registro del piloto ingresado mediante un json, el endpoint valida que no se ingrese un nombre o numero de piloto repetido")
     @ApiResponses(value = {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
             responseCode = "200", 
@@ -118,19 +175,20 @@ public class PilotoController {
     })
     public ResponseEntity<?> agregar(@RequestBody PilotoDTO pilotoDTO) {
         try {
-            PilotoDTO pilotoCreado = pilotoService.agregarPiloto(pilotoDTO);
-            return ResponseEntity.ok().body(new ApiResponse("Piloto agregado con exito", pilotoCreado, "N/A"));
+            ApiResponse responseCreacionPiloto = pilotoService.agregarPiloto(pilotoDTO);
+            return ResponseEntity.ok().body(responseCreacionPiloto);
             
         }
         catch(Exception e) {
-            return ResponseEntity.badRequest().body(new ApiResponse("Datos invalidos para agregar piloto", null, e.getMessage()));
+            ApiResponse responseCreacionPiloto = pilotoService.agregarPiloto(pilotoDTO);
+            return ResponseEntity.badRequest().body(responseCreacionPiloto);
         }
     }
     //PUT PILOTO
     // localhost:8080/motorSpring/piloto/2 para modificar a hamilton
 
     @PutMapping("/modificarPiloto/{id}")
-    @Operation(summary = "Modifica un registro en la base h2", description = "Modificamos el registro de un piloto mediante un json")
+    @Operation(summary = "Modifica un registro en la base h2", description = "Modificamos el registro de un piloto mediante un json, el endpoint valida que no se ingrese un numero o nombre de piloto que ya se encuentre registrado")
     @ApiResponses(value = {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
             responseCode = "200", 
@@ -152,12 +210,13 @@ public class PilotoController {
     })
     public ResponseEntity<?> modificar(@PathVariable Long id, @RequestBody PilotoDTO pilotoDTO) {
         try {
-            PilotoDTO pilotoModificado = pilotoService.actualizarPiloto(id, pilotoDTO);
-            return ResponseEntity.ok().body(new ApiResponse("Actualizacion exitosa del piloto", pilotoModificado, "N/A"));
+            ApiResponse responseActualizacionPiloto = pilotoService.actualizarPiloto(id, pilotoDTO);
+            return ResponseEntity.ok().body(responseActualizacionPiloto);
 
         }
         catch(Exception e) {
-            return ResponseEntity.badRequest().body(new ApiResponse("Datos invalidos para modificar", null, e.getMessage()));
+            ApiResponse responseActualizacionPiloto = pilotoService.actualizarPiloto(id, pilotoDTO);
+            return ResponseEntity.badRequest().body(responseActualizacionPiloto);
         }
     }
     //DELETE PILOTO

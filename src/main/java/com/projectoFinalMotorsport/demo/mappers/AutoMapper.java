@@ -37,7 +37,7 @@ public class AutoMapper {
 
         
         Piloto pilotoToEntity = autoDTO.getPiloto() != null
-                ? pilotoRepository.findByNombre(autoDTO.getPiloto())
+                ? pilotoRepository.findByNombre(autoDTO.getPiloto()).orElse(null)
                 : null;
 
         

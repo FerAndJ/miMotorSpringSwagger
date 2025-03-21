@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import com.projectoFinalMotorsport.demo.mappers.PilotoMapper;
@@ -16,6 +17,7 @@ import com.projectoFinalMotorsport.demo.repository.AutoRepository;
 import com.projectoFinalMotorsport.demo.repository.CarreraRepository;
 import com.projectoFinalMotorsport.demo.repository.EquipoRepository;
 import com.projectoFinalMotorsport.demo.repository.PilotoRepository;
+import com.projectoFinalMotorsport.demo.utils.ApiResponse;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
@@ -63,7 +65,10 @@ public class PilotoService {
     }
 
     @Transactional
-    public PilotoDTO agregarPiloto(PilotoDTO pilotoDTO) {
+    public ApiResponse agregarPiloto(PilotoDTO pilotoDTO) {
+        
+    try {   
+        String isValidName = this.validatePilot(pilotoDTO);
         
         
         List<Carrera> carreras = carreraRepository.findAll().stream()
@@ -90,8 +95,13 @@ public class PilotoService {
             .build();
 
         
+
         Piloto pilotoCreado = this.save(piloto);
-        return  pilotoMapper.toDto(pilotoCreado);
+            return  new ApiResponse(HttpStatus.CREATED.name(), pilotoDTO, "Piloto creado con exito");
+        
+        }   catch(Exception e) {
+            return  new ApiResponse(HttpStatus.BAD_REQUEST.name(), pilotoDTO, e.getMessage());
+        }
         
         /* 
         Piloto piloto = this.save(PilotoMapper.toEntity(pilotoDTO, equipoRepository, carreraRepository, autoRepository));
@@ -99,38 +109,88 @@ public class PilotoService {
         */
     }
 
-    @Transactional
-    public PilotoDTO actualizarPiloto(Long id, PilotoDTO pilotoDTO) {
-        Piloto piloto = pilotoRepository.findById(id)
-            .orElseThrow(() -> new EntityNotFoundException("Piloto con id: " + id + "no encontrado"));
-            
-        List<Carrera> carrerasPiloto = carreraRepository.findAll().stream()
-            .filter(carrera -> pilotoDTO.getCarreras().stream()
-                .anyMatch(carreraPilotoDTO -> carreraPilotoDTO.equals(carrera.getNombre())))
-                .collect(Collectors.toList());
+    private String validatePilot(PilotoDTO pilotoDTO) {
+        String pilotoName = pilotoDTO.getNombre();
+        String pilotoNumberString = pilotoDTO.getNumero().toString();
+        Integer pilotoNumber = pilotoDTO.getNumero();
         
-    if(carrerasPiloto.isEmpty()) {
-        throw new IllegalArgumentException("No se encontraron carreras");
+
+        if(pilotoName == null || pilotoName.isEmpty() || pilotoName.isBlank()) {
+            throw new IllegalArgumentException("El nombre no puede estar vacio");
+        }
+
+        else if(pilotoNumberString == null || pilotoNumberString.isEmpty() || pilotoNumberString.isBlank())
+         {
+            throw new IllegalArgumentException("El numero no puede estar vacio");
+         }
+
+         else if(nombreOcupado(pilotoName)) {
+            throw new IllegalArgumentException("El nombre del piloto ya fue registrado");
+         }
+
+         else if(numeroOcupado(pilotoNumber)) {
+            throw new IllegalArgumentException("El numero del piloto ya fue registrado");
+         }
+
+        return "Piloto valido";
     }
 
-    Auto autoPiloto = (pilotoDTO.getAuto() != null)
-                ? autoRepository.findByModelo(pilotoDTO.getAuto())
-                : null;
+    private Boolean nombreOcupado(String pilotoName) {
+        
+        return pilotoRepository.findByNombre(pilotoName).isPresent();
+    }
 
-    Equipo equipoPiloto = (pilotoDTO.getEquipo() != null)
-                ? equipoRepository.findByNombre(pilotoDTO.getEquipo())
-                : null;
+    private Boolean numeroOcupado(Integer pilotoNumber) {
+        return pilotoRepository.findByNumero(pilotoNumber).isPresent();
+    }
+
+
+    @Transactional
+    public ApiResponse actualizarPiloto(Long id, PilotoDTO pilotoDTO) {
+        
+        try {
+        
+            String isValidName = this.validatePilot(pilotoDTO);
+        
+            Piloto piloto = pilotoRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Piloto con id: " + id + "no encontrado"));
+            
+            List<Carrera> carrerasPiloto = carreraRepository.findAll().stream()
+                .filter(carrera -> pilotoDTO.getCarreras().stream()
+                    .anyMatch(carreraPilotoDTO -> carreraPilotoDTO.equals(carrera.getNombre())))
+                    .collect(Collectors.toList());
+        
+            /* 
+            if(carrerasPiloto.isEmpty()) {
+                throw new IllegalArgumentException("No se encontraron carreras");
+            }
+            VALIDACION POR SI SE QUIERE CARGAR A UN PILOTO CON ALGUNA CARRERA*/
+
+            Auto autoPiloto = (pilotoDTO.getAuto() != null)
+                    ? autoRepository.findByModelo(pilotoDTO.getAuto())
+                    : null;
+
+            Equipo equipoPiloto = (pilotoDTO.getEquipo() != null)
+                    ? equipoRepository.findByNombre(pilotoDTO.getEquipo())
+                    : null;
     
-    piloto.setNombre(pilotoDTO.getNombre());
-    piloto.setPeso(pilotoDTO.getPeso());
-    piloto.setNumero(pilotoDTO.getNumero());
-    piloto.setNacionalidad(pilotoDTO.getNacionalidad());
-    piloto.setCategoria(Categoria.valueOf(pilotoDTO.getCategoria()));
-    piloto.setEquipo(equipoPiloto);
-    piloto.setCarreras(carrerasPiloto);
-    piloto.setAuto(autoPiloto);
+            piloto.setNombre(pilotoDTO.getNombre());
+            piloto.setPeso(pilotoDTO.getPeso());
+            piloto.setNumero(pilotoDTO.getNumero());
+            piloto.setNacionalidad(pilotoDTO.getNacionalidad());
+            piloto.setCategoria(Categoria.valueOf(pilotoDTO.getCategoria()));
+            piloto.setEquipo(equipoPiloto);
+            piloto.setCarreras(carrerasPiloto);
+            piloto.setAuto(autoPiloto);
 
-    return pilotoMapper.toDto(pilotoRepository.save(piloto));
+            Piloto pilotoActualizado = pilotoRepository.save(piloto);
+            
+            return  new ApiResponse(HttpStatus.CREATED.name(), pilotoDTO, "Piloto actualizado con exito");
+        
+        }   catch(Exception e) {
+                return  new ApiResponse(HttpStatus.BAD_REQUEST.name(), pilotoDTO, e.getMessage());
+        }
+
     
     }
 
