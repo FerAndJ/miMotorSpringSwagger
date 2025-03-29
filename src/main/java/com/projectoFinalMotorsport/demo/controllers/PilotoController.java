@@ -119,8 +119,6 @@ public class PilotoController {
         pilotoService.listarPilotos().stream()
         .filter(piloto -> piloto.getCategoria().equalsIgnoreCase(category))
         .collect(Collectors.toList())
-            
-            
         ,"N/A")); 
 
         //Collector es para transformar el string en una lista, sin eso toList() hace que sea inmutable

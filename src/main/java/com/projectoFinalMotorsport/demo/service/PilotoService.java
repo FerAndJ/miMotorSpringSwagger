@@ -1,6 +1,7 @@
 package com.projectoFinalMotorsport.demo.service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,7 +69,7 @@ public class PilotoService {
     public ApiResponse agregarPiloto(PilotoDTO pilotoDTO) {
         
     try {   
-        String isValidName = this.validatePilot(pilotoDTO);
+        String isValidName = this.validatePilotPOST(pilotoDTO);
         
         
         List<Carrera> carreras = carreraRepository.findAll().stream()
@@ -109,7 +110,7 @@ public class PilotoService {
         */
     }
 
-    private String validatePilot(PilotoDTO pilotoDTO) {
+    private String validatePilotPOST(PilotoDTO pilotoDTO) {
         String pilotoName = pilotoDTO.getNombre();
         String pilotoNumberString = pilotoDTO.getNumero().toString();
         Integer pilotoNumber = pilotoDTO.getNumero();
@@ -132,7 +133,7 @@ public class PilotoService {
             throw new IllegalArgumentException("El numero del piloto ya fue registrado");
          }
 
-        return "Piloto valido";
+        return "Ingreso de piloto valido";
     }
 
     private Boolean nombreOcupado(String pilotoName) {
@@ -144,13 +145,12 @@ public class PilotoService {
         return pilotoRepository.findByNumero(pilotoNumber).isPresent();
     }
 
-
     @Transactional
     public ApiResponse actualizarPiloto(Long id, PilotoDTO pilotoDTO) {
         
         try {
         
-            String isValidName = this.validatePilot(pilotoDTO);
+            String isValidName = this.validatePilotPUT(pilotoDTO, id);
         
             Piloto piloto = pilotoRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Piloto con id: " + id + "no encontrado"));
@@ -192,6 +192,59 @@ public class PilotoService {
         }
 
     
+    }
+
+    private String validatePilotPUT(PilotoDTO pilotoDTO, Long id) {
+        String pilotoName = pilotoDTO.getNombre();
+        String pilotoNumberString = pilotoDTO.getNumero().toString();
+        Integer pilotoNumber = pilotoDTO.getNumero();
+        
+
+        if(pilotoName == null || pilotoName.isEmpty() || pilotoName.isBlank()) {
+            throw new IllegalArgumentException("El nombre no puede estar vacio");
+        }
+
+        else if(pilotoNumberString == null || pilotoNumberString.isEmpty() || pilotoNumberString.isBlank())
+         {
+            throw new IllegalArgumentException("El numero no puede estar vacio");
+         }
+
+          
+         else if(repiteNombre(pilotoDTO, id)) {
+            throw new IllegalArgumentException("El nuevo nombre ingresado ya se encuentra registrado por otro piloto");
+         }
+
+         else if(repiteNumero(pilotoDTO, id)) {
+            throw new IllegalArgumentException("El nuevo numero ingresado ya se encuentra registrado por otro piloto");
+         }
+        
+
+        return "Actualizacion de piloto valida";
+    }
+
+    Boolean repiteNombre(PilotoDTO pilotoDTO, Long id) {
+        String nuevoNombre = pilotoDTO.getNombre();
+        Optional<Piloto> pilotoMismoNombre = pilotoRepository.findByNombre(nuevoNombre);
+
+        if(pilotoMismoNombre.isEmpty()) {
+            return false;
+        }
+
+        Boolean repiteNombre = pilotoMismoNombre.get().getId() != id;
+        return repiteNombre;
+
+    }
+
+    Boolean repiteNumero(PilotoDTO pilotoDTO, Long id) {
+        Integer nuevoNumero = pilotoDTO.getNumero();
+        Optional<Piloto> pilotoMismoNumero = pilotoRepository.findByNumero(nuevoNumero);
+
+        if(pilotoMismoNumero.isEmpty()) {
+            return false;
+        }
+
+        Boolean repiteNumero = pilotoMismoNumero.get().getId() != id;
+        return repiteNumero;
     }
 
     @Transactional

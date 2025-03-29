@@ -90,7 +90,10 @@ localhost:8080/motorSpring/modificarPiloto/3
 
 Se debe ingresar el id del numero de piloto que queremos modificar (se puede consultar
 a que piloto pertence un cierto id con uno de los GET mencionados anteriormente) y de la misma forma
-que en el POST, se introduce un body con los datos a modificar.
+que en el POST, se introduce un body con los datos a modificar. No es necesario, al igual que en 
+el endpoint de creacion, ingresar el id, si es mandatorio ingresar el del parametro de la url
+que es el que, efectivamente, será modificado.
+
 
  {
         "id": 3,
